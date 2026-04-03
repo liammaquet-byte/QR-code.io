@@ -16,6 +16,14 @@ body {
   background: #ffffff;
 }
 
+.muted {
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.35;
+  margin-bottom: 14px;
+  text-align: center;
+}
+
 .wrap {
   width: 100%;
 }
