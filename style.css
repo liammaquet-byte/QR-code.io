@@ -108,7 +108,7 @@ input[type="color"] {
 
 button {
   border: 1px solid var(--border);
-  background: #ffffff;
+  background: #fff;
   color: var(--text);
   padding: 10px 14px;
   border-radius: 12px;
