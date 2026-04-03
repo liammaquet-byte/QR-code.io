@@ -4,20 +4,24 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Free QR Code Generator</title>
+
   <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.4/build/qrcode.min.js"></script>
+
   <style>
     :root {
       --bg: #f7f7fb;
       --card: #ffffff;
       --text: #1f2937;
-      --muted: #6b7280;
+      --muted: #9ca3af;
       --border: #e5e7eb;
       --accent: #111827;
       --success: #166534;
       --error: #991b1b;
     }
 
-    * { box-sizing: border-box; }
+    * {
+      box-sizing: border-box;
+    }
 
     body {
       margin: 0;
@@ -46,7 +50,7 @@
     }
 
     p {
-      color: var(--muted);
+      color: #6b7280;
       line-height: 1.5;
     }
 
@@ -56,17 +60,30 @@
       font-weight: bold;
     }
 
-    textarea, select, input[type="color"] {
+    textarea,
+    select,
+    input[type="color"] {
       width: 100%;
       padding: 12px;
       border: 1px solid var(--border);
       border-radius: 10px;
       font-size: 1rem;
+      background: white;
     }
 
     textarea {
       min-height: 120px;
       resize: vertical;
+    }
+
+    textarea::placeholder {
+      color: var(--muted);
+    }
+
+    input[type="color"] {
+      height: 52px;
+      padding: 6px;
+      cursor: pointer;
     }
 
     .grid {
@@ -106,32 +123,41 @@
       border: 1px dashed var(--border);
       border-radius: 12px;
       background: #fafafa;
+      min-height: 180px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
 
     canvas {
       max-width: 100%;
       height: auto;
+      display: block;
+    }
+
+    .placeholder-preview {
+      color: #9ca3af;
+      font-size: 0.95rem;
     }
 
     .status {
       margin-top: 16px;
       min-height: 24px;
       font-size: 0.95rem;
-      color: var(--muted);
     }
 
-    .status.success {
+    .success {
       color: var(--success);
     }
 
-    .status.error {
+    .error {
       color: var(--error);
     }
 
     .footer {
       margin-top: 18px;
       font-size: 0.9rem;
-      color: var(--muted);
+      color: #6b7280;
       text-align: center;
     }
 
@@ -149,7 +175,10 @@
       <p>Create QR codes instantly in your browser. No sign-up, no server, no tracking needed.</p>
 
       <label for="text">Text or URL</label>
-      <textarea id="text" placeholder="Enter a website link, text, email, Wi-Fi config, etc.">https://example.com</textarea>
+      <textarea
+        id="text"
+        placeholder="Enter a website link, text, email, Wi-Fi password, or any message..."
+      ></textarea>
 
       <div class="grid">
         <div>
@@ -159,16 +188,6 @@
             <option value="300" selected>300 x 300</option>
             <option value="400">400 x 400</option>
             <option value="512">512 x 512</option>
-          </select>
-        </div>
-
-        <div>
-          <label for="level">Error correction</label>
-          <select id="level">
-            <option value="L">Low</option>
-            <option value="M" selected>Medium</option>
-            <option value="Q">Quartile</option>
-            <option value="H">High</option>
           </select>
         </div>
 
@@ -190,11 +209,12 @@
         <button id="clearBtn" class="secondary">Clear</button>
       </div>
 
-      <div class="preview">
-        <canvas id="qrCanvas"></canvas>
+      <div class="preview" id="preview">
+        <span class="placeholder-preview">Your QR code will appear here</span>
+        <canvas id="qrCanvas" hidden></canvas>
       </div>
 
-      <div id="status" class="status" aria-live="polite"></div>
+      <div id="status" class="status"></div>
 
       <div class="footer">
         Built as a static HTML tool — perfect for GitHub Pages.
@@ -205,41 +225,59 @@
   <script>
     const textEl = document.getElementById("text");
     const sizeEl = document.getElementById("size");
-    const levelEl = document.getElementById("level");
     const darkColorEl = document.getElementById("darkColor");
     const lightColorEl = document.getElementById("lightColor");
     const canvas = document.getElementById("qrCanvas");
-    const generateBtn = document.getElementById("generateBtn");
-    const downloadBtn = document.getElementById("downloadBtn");
-    const copyBtn = document.getElementById("copyBtn");
-    const clearBtn = document.getElementById("clearBtn");
+    const preview = document.getElementById("preview");
     const statusEl = document.getElementById("status");
 
     function setStatus(message, type = "") {
       statusEl.textContent = message;
-      statusEl.className = "status";
-      if (type) statusEl.classList.add(type);
+      statusEl.className = "status " + type;
+    }
+
+    function normalizeInput(value) {
+      const trimmed = value.trim();
+
+      if (!trimmed) return "";
+
+      if (
+        /^[a-zA-Z0-9-]+\.[a-zA-Z]{2,}/.test(trimmed) &&
+        !/^https?:\/\//i.test(trimmed)
+      ) {
+        return "https://" + trimmed;
+      }
+
+      return trimmed;
     }
 
     async function generateQRCode() {
-      const text = textEl.value.trim();
+      const text = normalizeInput(textEl.value);
       const width = Number(sizeEl.value);
-      const errorCorrectionLevel = levelEl.value;
       const dark = darkColorEl.value;
       const light = lightColorEl.value;
 
       if (!text) {
-        setStatus("Please enter some text or a URL.", "error");
+        setStatus("Please enter text or a URL.", "error");
         return;
       }
 
       try {
         await QRCode.toCanvas(canvas, text, {
-          width,
-          errorCorrectionLevel,
-          color: { dark, light },
-          margin: 2
+          width: width,
+          errorCorrectionLevel: "M",
+          margin: 2,
+          color: {
+            dark: dark,
+            light: light
+          }
         });
+
+        canvas.hidden = false;
+
+        const placeholder = preview.querySelector(".placeholder-preview");
+        if (placeholder) placeholder.remove();
+
         setStatus("QR code generated.", "success");
       } catch (err) {
         console.error(err);
@@ -248,7 +286,7 @@
     }
 
     function downloadQRCode() {
-      if (!canvas.width || !canvas.height) {
+      if (!canvas.width) {
         setStatus("Generate a QR code first.", "error");
         return;
       }
@@ -257,56 +295,55 @@
       link.download = "qr-code.png";
       link.href = canvas.toDataURL("image/png");
       link.click();
-      setStatus("PNG download started.", "success");
     }
 
     async function copyQRCode() {
-      if (!canvas.width || !canvas.height) {
+      if (!canvas.width) {
         setStatus("Generate a QR code first.", "error");
         return;
       }
 
-      if (!navigator.clipboard || !window.ClipboardItem) {
-        setStatus("Image copy is not supported in this browser. Try Download PNG instead.", "error");
-        return;
-      }
-
       try {
-        const blob = await new Promise((resolve) => {
-          canvas.toBlob(resolve, "image/png");
-        });
+        const blob = await new Promise(resolve =>
+          canvas.toBlob(resolve, "image/png")
+        );
 
-        if (!blob) {
-          throw new Error("Failed to create image blob.");
-        }
+        await navigator.clipboard.write([
+          new ClipboardItem({
+            "image/png": blob
+          })
+        ]);
 
-        const item = new ClipboardItem({
-          "image/png": blob
-        });
-
-        await navigator.clipboard.write([item]);
-        setStatus("QR image copied to clipboard.", "success");
+        setStatus("QR image copied.", "success");
       } catch (err) {
-        console.error(err);
-        setStatus("Copy failed. Your browser may block image copying. Try Download PNG instead.", "error");
+        setStatus("Copy failed. Use download instead.", "error");
       }
     }
 
     function clearForm() {
       textEl.value = "";
+
       const ctx = canvas.getContext("2d");
       ctx.clearRect(0, 0, canvas.width, canvas.height);
+
       canvas.width = 0;
       canvas.height = 0;
-      setStatus("Cleared.");
+      canvas.hidden = true;
+
+      if (!preview.querySelector(".placeholder-preview")) {
+        preview.insertAdjacentHTML(
+          "afterbegin",
+          '<span class="placeholder-preview">Your QR code will appear here</span>'
+        );
+      }
+
+      setStatus("");
     }
 
-    generateBtn.addEventListener("click", generateQRCode);
-    downloadBtn.addEventListener("click", downloadQRCode);
-    copyBtn.addEventListener("click", copyQRCode);
-    clearBtn.addEventListener("click", clearForm);
-
-    window.addEventListener("load", generateQRCode);
+    document.getElementById("generateBtn").onclick = generateQRCode;
+    document.getElementById("downloadBtn").onclick = downloadQRCode;
+    document.getElementById("copyBtn").onclick = copyQRCode;
+    document.getElementById("clearBtn").onclick = clearForm;
   </script>
 </body>
 </html>
