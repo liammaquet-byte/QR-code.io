@@ -5,11 +5,6 @@ const lightColorEl = document.getElementById("lightColor");
 const canvas = document.getElementById("qrCanvas");
 const preview = document.getElementById("preview");
 const statusEl = document.getElementById("status");
-const downloadBtn = document.getElementById("downloadBtn");
-const copyBtn = document.getElementById("copyBtn");
-const clearBtn = document.getElementById("clearBtn");
-
-let debounceTimer = null;
 
 function setStatus(message, type = "") {
   statusEl.textContent = message;
@@ -19,57 +14,36 @@ function setStatus(message, type = "") {
 
 function normalizeInput(value) {
   const trimmed = value.trim();
-
   if (!trimmed) return "";
 
   const looksLikeDomain =
     /^[a-zA-Z0-9-]+\.[a-zA-Z]{2,}/.test(trimmed) &&
     !/^https?:\/\//i.test(trimmed) &&
     !/^mailto:/i.test(trimmed) &&
-    !/^tel:/i.test(trimmed) &&
-    !/^sms:/i.test(trimmed) &&
-    !/^WIFI:/i.test(trimmed);
+    !/^tel:/i.test(trimmed);
 
-  return looksLikeDomain ? `https://${trimmed}` : trimmed;
+  return looksLikeDomain ? "https://" + trimmed : trimmed;
 }
 
-function showPlaceholder() {
-  canvas.hidden = true;
-  canvas.width = 0;
-  canvas.height = 0;
-
-  if (!preview.querySelector(".placeholder-preview")) {
-    preview.insertAdjacentHTML(
-      "afterbegin",
-      '<span class="placeholder-preview">Your QR code will appear here</span>'
-    );
-  }
-}
-
-function hidePlaceholder() {
-  const placeholder = preview.querySelector(".placeholder-preview");
-  if (placeholder) placeholder.remove();
-}
-
-async function renderQRCode() {
+async function generateQRCode() {
   const text = normalizeInput(textEl.value);
   const width = Number(sizeEl.value);
-  const dark = darkColorEl.value;
-  const light = lightColorEl.value;
+  const dark = darkColorEl.value || "#000000";
+  const light = lightColorEl.value || "#ffffff";
 
   if (!text) {
-    showPlaceholder();
-    setStatus("");
+    setStatus("Please enter text or a URL.", "error");
     return;
   }
 
-  if (typeof QRCode === "undefined") {
-    setStatus("QR library failed to load.", "error");
+  if (typeof window.QRCode === "undefined") {
+    setStatus("QR library failed to load. Check qrcode.min.js path and file contents.", "error");
+    console.error("QRCode is undefined. qrcode.min.js did not load correctly.");
     return;
   }
 
   try {
-    await QRCode.toCanvas(canvas, text, {
+    await window.QRCode.toCanvas(canvas, text, {
       width,
       errorCorrectionLevel: "M",
       margin: 2,
@@ -79,24 +53,20 @@ async function renderQRCode() {
       }
     });
 
-    hidePlaceholder();
     canvas.hidden = false;
-    setStatus("QR code updated.", "success");
-  } catch (error) {
-    console.error("QR generation error:", error);
-    showPlaceholder();
+    const placeholder = preview.querySelector(".placeholder-preview");
+    if (placeholder) placeholder.remove();
+
+    setStatus("QR code generated.", "success");
+  } catch (err) {
+    console.error("QR generation failed:", err);
     setStatus("Could not generate the QR code.", "error");
   }
 }
 
-function scheduleRender() {
-  clearTimeout(debounceTimer);
-  debounceTimer = setTimeout(renderQRCode, 180);
-}
-
 function downloadQRCode() {
   if (!canvas.width) {
-    setStatus("Enter text or a URL first.", "error");
+    setStatus("Generate a QR code first.", "error");
     return;
   }
 
@@ -104,12 +74,11 @@ function downloadQRCode() {
   link.download = "qr-code.png";
   link.href = canvas.toDataURL("image/png");
   link.click();
-  setStatus("PNG download started.", "success");
 }
 
 async function copyQRCode() {
   if (!canvas.width) {
-    setStatus("Enter text or a URL first.", "error");
+    setStatus("Generate a QR code first.", "error");
     return;
   }
 
@@ -122,7 +91,8 @@ async function copyQRCode() {
     const blob = await new Promise((resolve) => canvas.toBlob(resolve, "image/png"));
 
     if (!blob) {
-      throw new Error("Failed to create PNG blob.");
+      setStatus("Could not copy QR image. Use Download PNG instead.", "error");
+      return;
     }
 
     await navigator.clipboard.write([
@@ -132,30 +102,32 @@ async function copyQRCode() {
     ]);
 
     setStatus("QR image copied.", "success");
-  } catch (error) {
-    console.error("Clipboard copy error:", error);
+  } catch (err) {
+    console.error("Clipboard copy failed:", err);
     setStatus("Copy failed. Use Download PNG instead.", "error");
   }
 }
 
 function clearForm() {
   textEl.value = "";
-  darkColorEl.value = "#000000";
-  lightColorEl.value = "#ffffff";
-  sizeEl.value = "300";
-  showPlaceholder();
+
+  const ctx = canvas.getContext("2d");
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  canvas.width = 0;
+  canvas.height = 0;
+  canvas.hidden = true;
+
+  if (!preview.querySelector(".placeholder-preview")) {
+    preview.insertAdjacentHTML(
+      "afterbegin",
+      '<span class="placeholder-preview">Your QR code will appear here</span>'
+    );
+  }
+
   setStatus("");
 }
 
-textEl.addEventListener("input", scheduleRender);
-sizeEl.addEventListener("change", renderQRCode);
-darkColorEl.addEventListener("input", renderQRCode);
-lightColorEl.addEventListener("input", renderQRCode);
-
-downloadBtn.addEventListener("click", downloadQRCode);
-copyBtn.addEventListener("click", copyQRCode);
-clearBtn.addEventListener("click", clearForm);
-
-window.addEventListener("load", () => {
-  showPlaceholder();
-});
+document.getElementById("generateBtn").addEventListener("click", generateQRCode);
+document.getElementById("downloadBtn").addEventListener("click", downloadQRCode);
+document.getElementById("copyBtn").addEventListener("click", copyQRCode);
+document.getElementById("clearBtn").addEventListener("click", clearForm);
