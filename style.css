@@ -5,6 +5,9 @@
 :root {
   --border: #e5e7eb;
   --muted: #6b7280;
+  --bg: #f3f4f6;
+  --card: #ffffff;
+  --text: #111827;
 }
 
 body {
@@ -12,16 +15,9 @@ body {
   margin: 24px auto;
   max-width: 920px;
   padding: 0 16px;
-  color: #111827;
-  background: #ffffff;
-}
-
-.muted {
-  color: var(--muted);
-  font-size: 13px;
-  line-height: 1.35;
-  margin-bottom: 14px;
-  text-align: center;
+  color: var(--text);
+  background: var(--bg);
+  min-height: 100vh;
 }
 
 .wrap {
@@ -33,7 +29,7 @@ body {
   border-radius: 14px;
   padding: 16px;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
-  background: #fff;
+  background: var(--card);
 }
 
 h1 {
@@ -65,7 +61,7 @@ input[type="color"] {
   font-size: 16px;
   font-family: inherit;
   background: #fff;
-  color: #111827;
+  color: var(--text);
 }
 
 textarea {
@@ -89,7 +85,7 @@ input[type="color"] {
   gap: 14px;
 }
 
-.grid > div:has(#size) {
+.grid > div:first-child {
   grid-column: 1 / -1;
 }
 
@@ -98,7 +94,7 @@ input[type="color"] {
     grid-template-columns: 1fr;
   }
 
-  .grid > div:has(#size) {
+  .grid > div:first-child {
     grid-column: auto;
   }
 }
@@ -112,8 +108,8 @@ input[type="color"] {
 
 button {
   border: 1px solid var(--border);
-  background: #111827;
-  color: white;
+  background: #ffffff;
+  color: var(--text);
   padding: 10px 14px;
   border-radius: 12px;
   cursor: pointer;
@@ -122,15 +118,14 @@ button {
   font-family: inherit;
 }
 
-button.secondary {
-  background: #fff;
-  color: #111827;
+button:hover {
+  background: #f9fafb;
 }
 
 .preview {
   margin-top: 14px;
   min-height: 260px;
-  border: 1px solid var(--border);
+  border: 1px dashed var(--border);
   border-radius: 12px;
   background: #fafafa;
   display: flex;
