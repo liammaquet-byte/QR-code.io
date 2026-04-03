@@ -2,9 +2,12 @@ const textEl = document.getElementById("text");
 const sizeEl = document.getElementById("size");
 const darkColorEl = document.getElementById("darkColor");
 const lightColorEl = document.getElementById("lightColor");
-const canvas = document.getElementById("qrCanvas");
 const preview = document.getElementById("preview");
 const statusEl = document.getElementById("status");
+const downloadBtn = document.getElementById("downloadBtn");
+const copyBtn = document.getElementById("copyBtn");
+
+let qrInstance = null;
 
 function setStatus(message, type = "") {
   statusEl.textContent = message;
@@ -25,9 +28,23 @@ function normalizeInput(value) {
   return looksLikeDomain ? "https://" + trimmed : trimmed;
 }
 
-async function generateQRCode() {
+function getCanvas() {
+  return preview.querySelector("canvas");
+}
+
+function getImage() {
+  return preview.querySelector("img");
+}
+
+function resetPreview() {
+  preview.innerHTML = `
+    <span class="placeholder-preview">Your QR code will appear here</span>
+  `;
+}
+
+function generateQRCode() {
   const text = normalizeInput(textEl.value);
-  const width = Number(sizeEl.value);
+  const size = Number(sizeEl.value);
   const dark = darkColorEl.value || "#000000";
   const light = lightColorEl.value || "#ffffff";
 
@@ -37,25 +54,21 @@ async function generateQRCode() {
   }
 
   if (typeof window.QRCode === "undefined") {
-    setStatus("QR library failed to load. Check qrcode.min.js path and file contents.", "error");
-    console.error("QRCode is undefined. qrcode.min.js did not load correctly.");
+    setStatus("QR library failed to load.", "error");
     return;
   }
 
   try {
-    await window.QRCode.toCanvas(canvas, text, {
-      width,
-      errorCorrectionLevel: "M",
-      margin: 2,
-      color: {
-        dark,
-        light
-      }
-    });
+    preview.innerHTML = "";
 
-    canvas.hidden = false;
-    const placeholder = preview.querySelector(".placeholder-preview");
-    if (placeholder) placeholder.remove();
+    qrInstance = new QRCode(preview, {
+      text: text,
+      width: size,
+      height: size,
+      colorDark: dark,
+      colorLight: light,
+      correctLevel: QRCode.CorrectLevel.M
+    });
 
     setStatus("QR code generated.", "success");
   } catch (err) {
@@ -65,20 +78,35 @@ async function generateQRCode() {
 }
 
 function downloadQRCode() {
-  if (!canvas.width) {
+  const canvas = getCanvas();
+  const image = getImage();
+
+  if (!canvas && !image) {
     setStatus("Generate a QR code first.", "error");
     return;
   }
 
+  let dataUrl = "";
+
+  if (canvas) {
+    dataUrl = canvas.toDataURL("image/png");
+  } else if (image) {
+    dataUrl = image.src;
+  }
+
   const link = document.createElement("a");
+  link.href = dataUrl;
   link.download = "qr-code.png";
-  link.href = canvas.toDataURL("image/png");
   link.click();
+
+  setStatus("PNG download started.", "success");
 }
 
 async function copyQRCode() {
-  if (!canvas.width) {
-    setStatus("Generate a QR code first.", "error");
+  const canvas = getCanvas();
+
+  if (!canvas) {
+    setStatus("Copy works after generating a QR code in a supported browser.", "error");
     return;
   }
 
@@ -110,24 +138,12 @@ async function copyQRCode() {
 
 function clearForm() {
   textEl.value = "";
-
-  const ctx = canvas.getContext("2d");
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-  canvas.width = 0;
-  canvas.height = 0;
-  canvas.hidden = true;
-
-  if (!preview.querySelector(".placeholder-preview")) {
-    preview.insertAdjacentHTML(
-      "afterbegin",
-      '<span class="placeholder-preview">Your QR code will appear here</span>'
-    );
-  }
-
+  qrInstance = null;
+  resetPreview();
   setStatus("");
 }
 
 document.getElementById("generateBtn").addEventListener("click", generateQRCode);
-document.getElementById("downloadBtn").addEventListener("click", downloadQRCode);
-document.getElementById("copyBtn").addEventListener("click", copyQRCode);
+downloadBtn.addEventListener("click", downloadQRCode);
+copyBtn.addEventListener("click", copyQRCode);
 document.getElementById("clearBtn").addEventListener("click", clearForm);
