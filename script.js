@@ -6,8 +6,10 @@ const preview = document.getElementById("preview");
 const statusEl = document.getElementById("status");
 const downloadBtn = document.getElementById("downloadBtn");
 const copyBtn = document.getElementById("copyBtn");
+const clearBtn = document.getElementById("clearBtn");
 
 let qrInstance = null;
+let debounceTimer = null;
 
 function setStatus(message, type = "") {
   statusEl.textContent = message;
@@ -37,9 +39,7 @@ function getImage() {
 }
 
 function resetPreview() {
-  preview.innerHTML = `
-    <span class="placeholder-preview">Your QR code will appear here</span>
-  `;
+  preview.innerHTML = `<span class="placeholder-preview">Your QR code will appear here</span>`;
 }
 
 function generateQRCode() {
@@ -49,7 +49,9 @@ function generateQRCode() {
   const light = lightColorEl.value || "#ffffff";
 
   if (!text) {
-    setStatus("Please enter text or a URL.", "error");
+    qrInstance = null;
+    resetPreview();
+    setStatus("");
     return;
   }
 
@@ -70,11 +72,16 @@ function generateQRCode() {
       correctLevel: QRCode.CorrectLevel.M
     });
 
-    setStatus("QR code generated.", "success");
+    setStatus("QR code ready.", "success");
   } catch (err) {
     console.error("QR generation failed:", err);
     setStatus("Could not generate the QR code.", "error");
   }
+}
+
+function scheduleGenerate() {
+  clearTimeout(debounceTimer);
+  debounceTimer = setTimeout(generateQRCode, 180);
 }
 
 function downloadQRCode() {
@@ -82,7 +89,7 @@ function downloadQRCode() {
   const image = getImage();
 
   if (!canvas && !image) {
-    setStatus("Generate a QR code first.", "error");
+    setStatus("Enter text or a URL first.", "error");
     return;
   }
 
@@ -106,7 +113,7 @@ async function copyQRCode() {
   const canvas = getCanvas();
 
   if (!canvas) {
-    setStatus("Copy works after generating a QR code in a supported browser.", "error");
+    setStatus("Copy works after a QR code is generated in a supported browser.", "error");
     return;
   }
 
@@ -139,11 +146,16 @@ async function copyQRCode() {
 function clearForm() {
   textEl.value = "";
   qrInstance = null;
+  clearTimeout(debounceTimer);
   resetPreview();
   setStatus("");
 }
 
-document.getElementById("generateBtn").addEventListener("click", generateQRCode);
+textEl.addEventListener("input", scheduleGenerate);
+sizeEl.addEventListener("change", generateQRCode);
+darkColorEl.addEventListener("input", generateQRCode);
+lightColorEl.addEventListener("input", generateQRCode);
+
 downloadBtn.addEventListener("click", downloadQRCode);
 copyBtn.addEventListener("click", copyQRCode);
-document.getElementById("clearBtn").addEventListener("click", clearForm);
+clearBtn.addEventListener("click", clearForm);
