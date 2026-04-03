@@ -8,7 +8,6 @@ const downloadBtn = document.getElementById("downloadBtn");
 const copyBtn = document.getElementById("copyBtn");
 const clearBtn = document.getElementById("clearBtn");
 
-let qrInstance = null;
 let debounceTimer = null;
 
 function setStatus(message, type = "") {
@@ -39,7 +38,7 @@ function getImage() {
 }
 
 function resetPreview() {
-  preview.innerHTML = `<span class="placeholder-preview">Your QR code will appear here</span>`;
+  preview.innerHTML = '<span class="placeholder-preview">Your QR code will appear here</span>';
 }
 
 function generateQRCode() {
@@ -49,7 +48,6 @@ function generateQRCode() {
   const light = lightColorEl.value || "#ffffff";
 
   if (!text) {
-    qrInstance = null;
     resetPreview();
     setStatus("");
     return;
@@ -63,7 +61,7 @@ function generateQRCode() {
   try {
     preview.innerHTML = "";
 
-    qrInstance = new QRCode(preview, {
+    new QRCode(preview, {
       text: text,
       width: size,
       height: size,
@@ -81,7 +79,7 @@ function generateQRCode() {
 
 function scheduleGenerate() {
   clearTimeout(debounceTimer);
-  debounceTimer = setTimeout(generateQRCode, 180);
+  debounceTimer = setTimeout(generateQRCode, 150);
 }
 
 function downloadQRCode() {
@@ -97,7 +95,7 @@ function downloadQRCode() {
 
   if (canvas) {
     dataUrl = canvas.toDataURL("image/png");
-  } else if (image) {
+  } else {
     dataUrl = image.src;
   }
 
@@ -145,13 +143,14 @@ async function copyQRCode() {
 
 function clearForm() {
   textEl.value = "";
-  qrInstance = null;
   clearTimeout(debounceTimer);
   resetPreview();
   setStatus("");
 }
 
 textEl.addEventListener("input", scheduleGenerate);
+textEl.addEventListener("paste", scheduleGenerate);
+textEl.addEventListener("keyup", scheduleGenerate);
 sizeEl.addEventListener("change", generateQRCode);
 darkColorEl.addEventListener("input", generateQRCode);
 lightColorEl.addEventListener("input", generateQRCode);
@@ -159,3 +158,9 @@ lightColorEl.addEventListener("input", generateQRCode);
 downloadBtn.addEventListener("click", downloadQRCode);
 copyBtn.addEventListener("click", copyQRCode);
 clearBtn.addEventListener("click", clearForm);
+
+window.addEventListener("DOMContentLoaded", () => {
+  if (textEl.value.trim()) {
+    generateQRCode();
+  }
+});
