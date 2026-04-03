@@ -3,23 +3,18 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-
   <title>Free QR Code Generator</title>
   <meta
     name="description"
     content="Create free QR codes instantly online. Download or copy QR images in one click."
   />
-
-  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="./style.css" />
 </head>
 <body>
   <div class="wrap">
     <div class="card">
       <h1>Free QR Code Generator</h1>
-      <p>
-        Create QR codes instantly in your browser. No sign-up, no server,
-        no tracking needed.
-      </p>
+      <p>Create QR codes instantly in your browser. No sign-up, no server, no tracking needed.</p>
 
       <label for="text">Text or URL</label>
       <textarea
@@ -57,22 +52,19 @@
       </div>
 
       <div class="preview" id="preview">
-        <span class="placeholder-preview">
-          Your QR code will appear here
-        </span>
+        <span class="placeholder-preview">Your QR code will appear here</span>
         <canvas id="qrCanvas" hidden></canvas>
       </div>
 
-      <div id="status" class="status"></div>
+      <div id="status" class="status" aria-live="polite"></div>
 
-  
+      <div class="footer">
+        Built as a free static HTML tool — hosted on GitHub Pages.
+      </div>
     </div>
   </div>
 
-  <!-- QR library MUST load first -->
-  <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.4/build/qrcode.min.js"></script>
-
-  <!-- Your app logic loads second -->
-  <script src="script.js"></script>
+  <script src="./qrcode.min.js"></script>
+  <script src="./script.js"></script>
 </body>
 </html>
