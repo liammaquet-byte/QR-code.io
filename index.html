@@ -3,15 +3,23 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
   <title>Free QR Code Generator</title>
+  <meta
+    name="description"
+    content="Create free QR codes instantly online. Download or copy QR images in one click."
+  />
+
   <link rel="stylesheet" href="style.css" />
-  <script src="./qrcode.min.js"></script>
 </head>
 <body>
   <div class="wrap">
     <div class="card">
       <h1>Free QR Code Generator</h1>
-      <p>Create QR codes instantly in your browser. No sign-up, no server, no tracking needed.</p>
+      <p>
+        Create QR codes instantly in your browser. No sign-up, no server,
+        no tracking needed.
+      </p>
 
       <label for="text">Text or URL</label>
       <textarea
@@ -19,8 +27,8 @@
         placeholder="Enter a website link, text, email, Wi-Fi password, or any message..."
       ></textarea>
 
-      <div class="controls">
-        <div class="field">
+      <div class="grid">
+        <div>
           <label for="size">Size</label>
           <select id="size">
             <option value="200">200 x 200</option>
@@ -30,38 +38,41 @@
           </select>
         </div>
 
-        <div class="color-row">
-          <div class="field">
-            <label for="darkColor">QR color</label>
-            <input id="darkColor" type="color" value="#000000" />
-          </div>
+        <div>
+          <label for="darkColor">QR color</label>
+          <input id="darkColor" type="color" value="#000000" />
+        </div>
 
-          <div class="field">
-            <label for="lightColor">Background color</label>
-            <input id="lightColor" type="color" value="#ffffff" />
-          </div>
+        <div>
+          <label for="lightColor">Background color</label>
+          <input id="lightColor" type="color" value="#ffffff" />
         </div>
       </div>
 
       <div class="actions">
+        <button id="generateBtn">Generate QR Code</button>
         <button id="downloadBtn" class="secondary">Download PNG</button>
         <button id="copyBtn" class="secondary">Copy QR Image</button>
         <button id="clearBtn" class="secondary">Clear</button>
       </div>
 
       <div class="preview" id="preview">
-        <span class="placeholder-preview">Your QR code will appear here</span>
+        <span class="placeholder-preview">
+          Your QR code will appear here
+        </span>
         <canvas id="qrCanvas" hidden></canvas>
       </div>
 
-      <div id="status" class="status" aria-live="polite"></div>
+      <div id="status" class="status"></div>
 
-      <div class="footer">
-        Built as a static HTML tool — perfect for GitHub Pages.
-      </div>
+  
     </div>
   </div>
 
+  <!-- QR library MUST load first -->
+  <script src="qrcode.min.js"></script>
+
+  <!-- Your app logic loads second -->
   <script src="script.js"></script>
 </body>
 </html>
