@@ -127,7 +127,7 @@ button:hover {
   min-height: 260px;
   border: 1px dashed var(--border);
   border-radius: 12px;
-  background: #fafafa;
+  background: #fff;
   display: flex;
   align-items: center;
   justify-content: center;
